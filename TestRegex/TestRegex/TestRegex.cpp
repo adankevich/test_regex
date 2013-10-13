@@ -1,6 +1,3 @@
-// TestRegex.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 
 #include <iostream>
@@ -215,12 +212,13 @@ void init ()
 	results = read_results ();
 
 	// Print all rules
+	std::cout << "Rules:" << std::endl;
 	for ( auto const& rule : rules )
 		std::cout << rule.raw_str << std::endl;
 	std::cout << std::endl;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main()
 {
 	init ();
 
@@ -232,6 +230,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		"Unmatched - Reference Name - Part Reference - Reference Name",
 	};
 
+	std::cout << "Start parsing..." << std::endl;
 	for ( auto const& error_str : error_strings )
 	{
 		std::cout << "Error line: " << error_str << std::endl;
