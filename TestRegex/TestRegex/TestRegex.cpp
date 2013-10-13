@@ -9,13 +9,13 @@
 
 struct Rule;
 
-typedef std::vector<Rule> RULES_CONT;
-typedef std::unordered_set<std::string> RESULTS_CONT;
-typedef std::unordered_set<std::string> TYPES_CONT;
+typedef std::vector<Rule> Rules_cont;
+typedef std::unordered_set<std::string> Results_cont;
+typedef std::unordered_set<std::string> Types_cont;
 
-RULES_CONT rules;
-RESULTS_CONT results;
-TYPES_CONT types;
+Rules_cont rules;
+Results_cont results;
+Types_cont types;
 
 enum Replacement {
 	INVALID = -1,
@@ -27,7 +27,7 @@ enum Replacement {
 
 bool is_valid_id ( std::string const& value )
 {
-	std::regex const rx ( "\\d+|\\d+\s*\\(\\d+\\)" );
+	std::regex const rx ( "\\d+|\\d+\\s*\\(\\d+\\)" );
 
 	return std::regex_match ( value, rx );
 }
@@ -171,19 +171,19 @@ struct Rule
 };
 
 // Should be read from TYPES.txt
-TYPES_CONT read_types ()
+Types_cont read_types ()
 {
 	std::string tmp[] = { "Solid Face", "Parabola", "Point", "Part Reference"};
-	TYPES_CONT types (tmp, tmp + sizeof(tmp) / sizeof(tmp[0]));
+	Types_cont types (tmp, tmp + sizeof(tmp) / sizeof(tmp[0]));
 
 	return types;
 }
 
 // Should be read from RESULTS.txt
-RESULTS_CONT read_results ()
+Results_cont read_results ()
 {
 	std::string tmp[] = { "Geometric Face", "Reference Name", "Trim Edge"};
-	RESULTS_CONT results (tmp, tmp + sizeof(tmp) / sizeof(tmp[0]));
+	Results_cont results (tmp, tmp + sizeof(tmp) / sizeof(tmp[0]));
 
 	return results;
 }
