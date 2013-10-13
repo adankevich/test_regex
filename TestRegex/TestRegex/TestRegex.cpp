@@ -146,7 +146,7 @@ struct Rule
 				switch ( replacement )
 				{
 				case ID:
-					err_data.id = value;
+					err_data.id += value + "; ";
 					break;
 
 				case RESULT:
@@ -190,8 +190,10 @@ RESULTS_CONT read_results ()
 
 std::vector<Rule> read_rules ()
 {
-	std::array<std::string, 4> rule_strings = {
+	std::array<std::string, 6> rule_strings = {
 		"Unmatched - $ID$ - $TYPE$",
+		"Unmatched - $ID$ - $ID$ - $TYPE$",
+		"Unmatched - $ID$ - $ID$ - $TYPE$ - $RESULT$",
 		"Unmatched - $ID$ - $RESULT$",
 		"Unmatched - $TYPE$ - $RESULT$",
 		"Unmatched - $RESULT$ - $TYPE$",
@@ -222,12 +224,14 @@ int main()
 {
 	init ();
 
-	std::array<std::string, 5> error_strings = {
-		"Unmatched - 12 - Reference Name",
-		"Unmatched - 12 (10) - Reference Name",
-		"Unmatched - Part Reference - Reference Name",
-		"Unmatched - Reference Name - Part Reference",
-		"Unmatched - Reference Name - Part Reference - Reference Name",
+	std::array<std::string, 7> error_strings = {
+		"Unmatched - 12 - Reference Name", // ID - Result
+		"Unmatched - 12 (10) - Reference Name", // ID - Result
+		"Unmatched - 12 (10) - 42 - Part Reference", // ID - ID - Type
+		"Unmatched - 42 - 12 (10) - Part Reference - Reference Name", // ID - ID - Type - Result
+		"Unmatched - Part Reference - Reference Name", // Type - Result
+		"Unmatched - Reference Name - Part Reference", // Result - Type
+		"Unmatched - Reference Name - Part Reference - Reference Name", // UNMATCHED
 	};
 
 	std::cout << "Start parsing..." << std::endl;
