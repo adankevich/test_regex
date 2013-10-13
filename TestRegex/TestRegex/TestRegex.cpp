@@ -27,7 +27,7 @@ enum Replacement {
 
 bool is_valid_id ( std::string const& value )
 {
-	std::regex const rx ( "\\d+|\\d+.*\\(\\d+\\)" );
+	std::regex const rx ( "\\d+|\\d+\s*\\(\\d+\\)" );
 
 	return std::regex_match ( value, rx );
 }
