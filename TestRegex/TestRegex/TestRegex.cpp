@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <cassert>
 #include <iostream>
 #include <string>
 #include <regex>
@@ -68,13 +69,13 @@ Replacement string2replacement ( std::string const& str )
 {
 	auto result = INVALID;
 
-	if ( str == "$ID$" )
+	if ( str == "ID" )
 		result = ID;
-	else if ( str == "$NAME$" )
+	else if ( str == "NAME" )
 		result = NAME;
-	else if ( str == "$RESULT$" )
+	else if ( str == "RESULT" )
 		result = RESULT;	
-	else if ( str == "$TYPE$" )
+	else if ( str == "TYPE" )
 		result = TYPE;
 
 	return result;
@@ -93,24 +94,24 @@ struct ErrorData
 
 struct Rule
 {
-	std::string raw_str;	// "Unmatched - $ID$ - $TYPE$"
-	std::string regex_str;	// "Unmatched - (.*) - (.*)"
+	std::string raw_str;	// "%Unmatched% - $ID$ - $TYPE$"
+	std::string regex_str;	// "%Unmatched% - (.*) - (.*)". Shouldn't be used directly, use localized() instead
 	std::vector<Replacement> replacements;	// { ID, TYPE }
 
 	Rule ( std::string const& rule_str )
 	{
 		this->raw_str = rule_str;
 
-		std::regex const rx ("(\\$)([^ ]*)"); // match words starting with $ charachter
+		std::regex const rx ("\\$(\\w+)\\$"); // match word surrounded with $ charachter. Results { $\w$, \w }
 
 		std::smatch sm;
-		std::string str = rule_str; 
+		std::string str = rule_str;
 		while (std::regex_search ( str, sm, rx)) {
 
 			//std::cout << sm[0];
 			//std::cout << std::endl;
 
-			this->replacements.push_back ( string2replacement ( sm[0] )); // is it reliable to use 0th index???
+			this->replacements.push_back ( string2replacement ( sm[1] )); // is it reliable to use 1st index???
 
 			str = sm.suffix().str();
 		}
@@ -126,7 +127,7 @@ struct Rule
 		ErrorData err_data;
 		err_data.valid = false;
 
-		std::regex const rx ( regex_str );
+		std::regex const rx ( localized () );
 		std::smatch sm;
 
 		if ( std::regex_match ( error_str, sm, rx ) && (sm.size() - 1) == replacements.size () )
@@ -168,6 +169,39 @@ struct Rule
 
 		return err_data;
 	}
+
+	std::string localized ( ) const
+	{
+		assert ( !regex_str.empty () );
+
+
+		std::regex const rx ("%(\\w*)%"); // match word surrounded with % charachter. Results { %\w%, \w }
+		std::smatch sm;
+
+		// Retrieve strings to be localized
+		std::vector<std::string> tokens;
+		std::vector<std::string> loc_strings;
+		std::string result = regex_str;
+		while ( std::regex_search ( result, sm, rx ) )
+		{
+			assert ( sm.size() >= 2 );
+
+			tokens.push_back ( sm[0] );
+			loc_strings.push_back ( sm[1] ); // Fake localization. To be implemented.
+			result = sm.suffix().str();
+		}
+
+		// Replace with localized strings
+		result = regex_str;
+		for ( size_t i = 0; i < tokens.size(); i++ )
+		{
+			std::regex rx ( tokens[i] );
+			std::string tmp;
+			result = std::regex_replace (result, rx, loc_strings[i]);
+		}
+
+		return result;
+	}
 };
 
 // Should be read from TYPES.txt
@@ -190,13 +224,14 @@ Results_cont read_results ()
 
 std::vector<Rule> read_rules ()
 {
-	std::array<std::string, 6> rule_strings = {
-		"Unmatched - $ID$ - $TYPE$",
-		"Unmatched - $ID$ - $ID$ - $TYPE$",
-		"Unmatched - $ID$ - $ID$ - $TYPE$ - $RESULT$",
-		"Unmatched - $ID$ - $RESULT$",
-		"Unmatched - $TYPE$ - $RESULT$",
-		"Unmatched - $RESULT$ - $TYPE$",
+	std::array<std::string, 7> rule_strings = {
+		"%Unmatched% %Ent% - $ID$ - $RESULT$",
+		"%Unmatched% - $ID$ - $TYPE$",
+		"%Unmatched% - $ID$ - $ID$ - $TYPE$",
+		"%Unmatched% - $ID$ - $ID$ - $TYPE$ - $RESULT$",
+		"%Unmatched% - $ID$ - $RESULT$",
+		"%Unmatched% - $TYPE$ - $RESULT$",
+		"%Unmatched% - $RESULT$ - $TYPE$",
 	};
 
 	std::vector<Rule> rules;
@@ -225,7 +260,7 @@ int main()
 	init ();
 
 	std::array<std::string, 7> error_strings = {
-		"Unmatched - 12 - Reference Name", // ID - Result
+		"Unmatched Ent - 12 - Reference Name", // ID - Result
 		"Unmatched - 12 (10) - Reference Name", // ID - Result
 		"Unmatched - 12 (10) - 42 - Part Reference", // ID - ID - Type
 		"Unmatched - 42 - 12 (10) - Part Reference - Reference Name", // ID - ID - Type - Result
@@ -239,7 +274,6 @@ int main()
 	{
 		std::cout << "Error line: " << error_str << std::endl;
 		ErrorData err_data;
-
 		for ( auto const& rule : rules )
 		{
 			err_data = rule.process_error ( error_str );
